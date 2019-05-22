@@ -1,0 +1,88 @@
+---
+title: "Lab8_Wk1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message = FALSE}
+
+library(raster)
+library(rgdal)
+library(rasterVis)
+library(maps)
+library(rgeos)
+library(dplyr)
+library(RColorBrewer)
+```
+
+```{r}
+cols = rev(colorRampPalette(brewer.pal(11, 'Spectral'))(255)) 
+```
+
+
+```{r}
+#plot the raster
+
+all_threats <- raster("full_modelnv.tif")
+
+plot(all_threats,col=cols)
+```
+
+```{r}
+plot(all_threats,ext=extent(-130,-110,24,50),col=cols)
+
+map('world',fill=T,add=T,col='gray')
+
+```
+
+```{r}
+
+plot(all_threats,col=cols,ext=extent(-121,-117,32,35),main="Cumulative Threats") 
+
+```
+
+```{r}
+hist(all_threats,main="Cumulative Threats Frequency")
+
+```
+
+```{r}
+cellStats(all_threats,mean)
+
+cellStats(all_threats,sd)
+```
+
+```{r}
+
+all_spp <- raster("ca_curr_sp_rich.tif")
+
+all_spp
+
+plot(all_spp,col=cols)
+
+```
+
+```{r}
+
+threats_crop <- crop(all_threats,all_spp)
+
+threats_crop
+
+```
+
+```{r}
+
+spp_res <- resample(all_spp,threats_crop,method='ngb',progress='text')
+
+```
+
+```{r}
+spp_threat_stack <- stack(threats_crop,spp_res)
+plot(spp_threat_stack,col=cols)
+
+```
+
+
