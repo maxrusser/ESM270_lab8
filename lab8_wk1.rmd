@@ -85,4 +85,161 @@ plot(spp_threat_stack,col=cols)
 
 ```
 
+```{r}
+hist(spp_res,main="Species Raster Values") 
+
+```
+
+```{r}
+spp_res <- reclassify(spp_res,rcl=c(-Inf,0,NA))
+hist(spp_res,main="Species Raster Values, Zeroes Removed")
+plot(spp_res)
+```
+
+```{r}
+spp_cutoff <- quantile(spp_res,0.8)
+spp_cutoff
+spp_maxVal <- cellStats(spp_res,max)
+spp_maxVal
+```
+
+```{r}
+rcl_mat <- c(-Inf,spp_cutoff,0,
+            spp_cutoff,spp_maxVal,1)
+rcl_mat
+
+```
+
+```{r}
+
+spp_binary <- reclassify(spp_res,rcl=rcl_mat)
+spp_binary
+
+```
+
+```{r}
+binary_cols <- c("white","firebrick")
+plot(spp_binary,col=binary_cols,legend=F,main="Top 20% of Species Richness")
+map('world',fill=T,add=T,col='gray')
+
+
+```
+
+
+```{r}
+
+#reclassify top 20% of threats
+
+threats_cutoff <- quantile(threats_crop,0.8)
+threats_maxVal <- cellStats(threats_crop,max)
+
+rcl_mat <- c(-Inf,threats_cutoff,0,
+            threats_cutoff, threats_maxVal,1)
+
+threats_binary <- reclassify(threats_crop,rcl=rcl_mat)
+
+binary_cols <- c("white","firebrick")
+plot(threats_binary,col=binary_cols,main="Top 20% of Threats Richness")
+map('world',fill=T,add=T,col='gray')
+
+
+```
+
+```{r}
+hotspots <- overlay(spp_binary,threats_binary,fun=function(x,y){x+y})
+
+brks_hotspots <- seq(0,3,length.out=4) 
+hotspot_cols <- c("white","lightblue","firebrick")
+
+plot(hotspots,col=hotspot_cols,legend=F,main="Hotspots");map('world',fill=T,add=T,col='gray80')
+
+```
+
+```{r}
+
+plot(hotspots,col=hotspot_cols,ext=extent(-121,-117,32,35),main="Hotspots, SB Channel",legend=F)
+map('world',fill=T,add=T,col='gray80')
+
+```
+
+###Assignment
+
+- can use tmap to plot map figure
+
+```{r}
+#read layers in
+nutrients <- raster("impact_nutrients.tif")
+sed_decrease <- raster("impact_sed_decrease.tif")
+sed_increase <- raster("impact_sed_increase.tif")
+organic <- raster("impact_organic.tif")
+inorganic <- raster("impact_inorganic.tif")
+
+#reclassify
+nutrients_rec <- reclassify(nutrients,rcl=c(-Inf,0,NA))
+sed_decrease_rec <- reclassify(sed_decrease,rcl=c(-Inf,0,NA))
+sed_increase_rec <- reclassify(sed_increase,rcl=c(-Inf,0,NA))
+organic_rec <- reclassify(organic,rcl=c(-Inf,0,NA))
+inorganic_rec <- reclassify(inorganic,rcl=c(-Inf,0,NA))
+
+hist(nutrients_rec)
+hist(sed_decrease_rec)
+hist(sed_increase_rec)
+hist(organic_rec)
+hist(inorganic_rec)
+
+
+```
+
+```{r}
+
+reclassify_topx <- function(rast,quant=0.8) {
+  topx <- quantile(rast,quant) #find the 80% quantile of the raster values
+  maxVal <- cellStats(rast,max) #find the maximum
+  rcl <- c(-Inf,topx,0,
+            topx,maxVal,1) # reclassify matrix (see help file for ?reclassify)
+  out <- reclassify(rast,rcl=rcl)
+  return(out) # returns the new binary raster
+}
+
+nutrients_top20 <- reclassify_topx(nutrients_rec,quant=0.8)
+plot(nutrients_top20,col=binary_cols,legend=F)
+map('world',fill=T,add=T,col='gray80')
+     
+sed_decrease_top20 <- reclassify_topx(sed_decrease_rec,quant=0.8)
+
+
+sed_increase_top20 <- reclassify_topx(sed_increase_rec,quant=0.8)
+organic_top20 <- reclassify_topx(organic_rec,quant=0.8)
+inorganic_top20 <- reclassify_topx(organic_rec,quant=0.8)
+
+```
+
+```{r}
+
+#stack layers
+lnd_threat_stack <- stack(nutrients_rec, sed_decrease_rec, sed_increase_rec, organic_rec, inorganic_rec)
+plot(lnd_threat_stack, col=cols)
+
+```
+
+
+```{r}
+#overlay
+
+threats_overlay <- overlay(nutrients_top20, sed_decrease_top20, sed_increase_top20, organic_top20, inorganic_top20, fun=sum)
+
+
+```
+
+```{r}
+#reclassify species 
+otter <- raster("ca_current_aquamap_Enhydra lutris.tif")
+
+
+```
+
+
+
+
+
 
