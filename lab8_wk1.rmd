@@ -232,14 +232,45 @@ threats_overlay <- overlay(nutrients_top20, sed_decrease_top20, sed_increase_top
 ```
 
 ```{r}
-#reclassify species 
+#read in species layer and reclassify
 otter <- raster("ca_current_aquamap_Enhydra lutris.tif")
 
+#crop
+threats_crop_o <- crop(threats_overlay, otter)
+
+#resample
+spp_res <- resample(otter,threats_crop_o,method='ngb',progress='text')
+
+#reclassify
+otter_rec <- reclassify(spp_res,rcl=c(-Inf,0,NA))
+
+hist(otter_rec)
+
+otter_top20 <- reclassify_topx(otter_rec,quant=0.8)
+
+plot(otter_top20, col=binary_cols,legend=F)
 
 ```
 
+```{r}
+#overlay 
+
+otter_threats <- overlay(threats_crop_o, otter_top20, fun=sum)
+
+```
+
+```{r}
+#plot
+plot(otter_threats,col=binary_cols,legend=F)
+
+```
+
+```{r}
+#create raster layer to import into arc
+
+writeRaster(otter_threats, "otter_threat", format = "GTiff")
 
 
-
+```
 
 
